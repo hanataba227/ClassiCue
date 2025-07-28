@@ -3,3 +3,4 @@ __pycache__/*
 utils/__pycache__/*
 pages/__pycache__/*
 chroma_db/*
+.vscode/
