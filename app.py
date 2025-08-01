@@ -4,7 +4,7 @@ import streamlit as st
 st.set_page_config(page_title="클래식 곡 설명 생성기", layout="wide")
 
 from utils.supabase_client import get_sb_client
-from utils.auth            import get_current_user, get_role
+from utils.auth import get_current_user, get_role
 
 # CSS 스타일 로드
 try:
@@ -62,7 +62,37 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# 관리자 링크는 조건부로 표시
+# 상단 사용자 정보 및 네비게이션
+col1, col2 = st.columns([3, 1])
+with col1:
+    st.markdown(f"**👤 사용자:** {user.email} | **🎭 역할:** {'관리자' if role == 'admin' else '일반 사용자'}")
+
+# 네비게이션 버튼
+if role == "admin":
+    col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 1])
+    with col1:
+        st.markdown("**📍 현재: 메인 페이지**")
+    with col2:
+        if st.button("🎵 공연 보기"):
+            st.switch_page("pages/concert_view.py")
+    with col3:
+        if st.button("🎫 공연 등록"):
+            st.switch_page("pages/admin_dashboard.py")
+    with col4:
+        if st.button("🗑️ 공연 관리"):
+            st.switch_page("pages/admin_manage.py")
+    with col5:
+        if st.button("🔧 프롬프트 관리"):
+            st.switch_page("pages/prompt_manager.py")
+else:
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        st.markdown("**📍 현재: 메인 페이지**")
+    with col2:
+        if st.button("🎵 공연 보기"):
+            st.switch_page("pages/concert_view.py")
+
+# 관리자 안내 메시지
 if role == "admin":
     st.markdown(
         """
@@ -73,13 +103,6 @@ if role == "admin":
         """,
         unsafe_allow_html=True
     )
-    
-    col1, col2, col3 = st.columns([1, 1, 1])
-    with col2:
-        st.page_link(
-            "pages/admin_dashboard.py",
-            label="🛠️ 공연 생성 / 편집",
-        )
 
 st.markdown('<hr class="custom-divider">', unsafe_allow_html=True)
 
@@ -107,8 +130,9 @@ if not concerts:
     st.markdown(
         """
         <div class="info-box info-box-blue">
-            <h4>📋 등록된 공연이 없습니다</h4>
-            <p>아직 등록된 공연 정보가 없습니다.</p>
+            <h3>🎭 곧 멋진 공연들이 찾아옵니다!</h3>
+            <p>현재 새로운 클래식 공연들을 준비하고 있습니다.</p>
+            <p>AI가 생성하는 깊이 있는 곡 해설과 함께 클래식의 매력을 만나보세요.</p>
         </div>
         """,
         unsafe_allow_html=True
@@ -117,39 +141,55 @@ if not concerts:
     if role == "admin":
         st.markdown(
             """
-            <div class="info-box info-box-gold">
-                <h4>💡 관리자 안내</h4>
-                <p>상단의 "공연 생성 / 편집" 버튼으로 새 공연을 추가하세요.</p>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-else:
-    for i, c in enumerate(concerts):
-        # 공연 정보를 카드 형태로 표시
-        st.markdown(
-            f"""
-            <div class="concert-card">
-                <div class="concert-title">{c['title']}</div>
-                <div class="concert-details">
-                    <span class="concert-venue">📍 {c['venue']}</span>
-                    <span style="margin: 0 1rem;">│</span>
-                    <span class="concert-date">📅 {c['date']}</span>
-                </div>
+            <div class="info-box info-box-yellow">
+                <h4>🎯 관리자 안내</h4>
+                <p>첫 번째 공연을 등록하여 서비스를 시작해보세요!</p>
             </div>
             """,
             unsafe_allow_html=True
         )
         
-        # 각 공연마다 "자세히 보기" 버튼
-        col1, col2, col3 = st.columns([2, 1, 2])
+        col1, col2, col3 = st.columns([1, 1, 1])
         with col2:
-            st.page_link(
-                "pages/concert_view.py",
-                label="🎼 자세히 보기",
-                help=f"concert_id: {c['id']}"
-            )
+            st.page_link("pages/admin_dashboard.py", label="🎫 첫 공연 등록하기")
+else:
+    # 공연 목록을 카드 형태로 표시
+    for i in range(0, len(concerts), 2):
+        cols = st.columns(2)
         
-        # 마지막 공연이 아니라면 구분선 추가
-        if i < len(concerts) - 1:
-            st.markdown('<hr class="custom-divider">', unsafe_allow_html=True)
+        for j, col in enumerate(cols):
+            if i + j < len(concerts):
+                concert = concerts[i + j]
+                with col:
+                    st.markdown(
+                        f"""
+                        <div class="concert-card">
+                            <h3 class="concert-title">{concert['title']}</h3>
+                            <div class="concert-info">
+                                <p><strong>🏛️ 공연장:</strong> {concert['venue']}</p>
+                                <p><strong>📅 일정:</strong> {concert['date']}</p>
+                            </div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
+                    
+                    # 공연 상세 보기 버튼
+                    if st.button(f"🎵 {concert['title']} 상세보기", key=f"concert_{concert['id']}"):
+                        st.query_params["concert_id"] = concert["id"]
+                        st.switch_page("pages/concert_view.py")
+
+st.markdown('<hr class="custom-divider">', unsafe_allow_html=True)
+
+# ──────────────────────────
+# 4) 푸터
+# ──────────────────────────
+st.markdown(
+    """
+    <div class="footer">
+        <p>🎼 클래식 음악의 아름다움을 AI와 함께 만나보세요</p>
+        <p>✨ 모든 곡 설명은 AI가 생성한 창작물입니다</p>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
