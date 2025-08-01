@@ -58,7 +58,11 @@ if user:
                 st.switch_page("pages/admin_manage.py")
         with col4:
             if st.button("🔧 프롬프트 관리", use_container_width=True):
-                st.switch_page("pages/prompt_manager.py")
+                st.switch_page("pages/prompt_manager.py")               
+        with col5:
+            if st.button("🚪 로그아웃", use_container_width=True):
+                sign_out()
+                st.rerun()
     else:
         st.markdown("### 👤 사용자 메뉴")
         # 일반 사용자용 3개 버튼
@@ -69,6 +73,10 @@ if user:
         with col2:
             if st.button("🎵 공연 보기", use_container_width=True):
                 st.switch_page("pages/concert_view.py")
+        with col3:
+            if st.button("🚪 로그아웃", use_container_width=True):
+                sign_out()
+                st.rerun()
             
 else:
     with st.form("login_form"):
