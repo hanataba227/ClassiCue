@@ -213,18 +213,25 @@ with st.form("concert_form", clear_on_submit=True):
             if track["title"].strip() and track["composer"].strip():
                 valid_tracks_display.append(f"{i+1}. **{track['title']}** - {track['composer']}")
         
+        # 유효한 곡이 있는지 세션 상태에 저장
+        st.session_state['valid_tracks'] = len(valid_tracks_display) > 0
+        
         if valid_tracks_display:
             for track_display in valid_tracks_display:
                 st.markdown(track_display)
         else:
             st.info("유효한 곡이 없습니다. 위에서 곡 정보를 입력해주세요.")
     else:
+        st.session_state['valid_tracks'] = False
         st.info("곡이 없습니다. 위에서 곡을 추가해주세요.")
+    
+    # 버튼 활성화 조건 확인
+    has_valid_tracks = st.session_state.get('valid_tracks', False)
+    has_selected_templates = len(st.session_state.get('selected_templates', [])) > 0
     
     submitted = st.form_submit_button(
         "🎼 공연 + 곡 저장",
-        disabled=(not st.session_state.get('valid_tracks', False) or 
-                 len(st.session_state.get('selected_templates', [])) == 0)
+        disabled=(not has_valid_tracks or not has_selected_templates)
     )
 
 # ② 데이터베이스 저장
